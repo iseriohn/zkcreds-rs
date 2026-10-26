@@ -476,6 +476,11 @@ fn user_link<R: Rng + CryptoRng>(
 }
 
 pub fn bench_passport(c: &mut Criterion) {
+    if !std::path::Path::new("benches/passport/passport_dump.json").is_file() {
+        eprintln!("Skipping passport benchmarks: benches/passport/passport_dump.json is missing");
+        return;
+    }
+
     let mut rng = ark_std::test_rng();
 
     // Generate all the Groth16 and Groth-Sahai proving and verifying keys

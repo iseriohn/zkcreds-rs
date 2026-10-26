@@ -1,5 +1,6 @@
 /target
 Cargo.lock
+proof_sizes.csv
 .DS_Store
 michaels_passport.json
 michaels_isureq.txt

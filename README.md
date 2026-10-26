@@ -15,7 +15,7 @@ For an overview of this library and usage snippets, see the wiki [here](https://
 
 ## Web Demo
 
-With Rust v1.48+ and Python v3.7+ installed:
+With the repository's Rust toolchain and Python v3.7+ installed:
 
 ```bash
 $ cd zkcreds-rs
@@ -37,13 +37,17 @@ Interact with the demo to get an idea for how arbitrary attribute fields can be 
 
 ## Benchmarks
 
-You can run benchmarks using `cargo bench`. This will produce `criterion` benchmarks in `target/criterion/`. It will also create `proof_sizes.csv`, which records proof sizes across various benchmarks.
+The repository selects Rust 1.85 automatically through `rust-toolchain.toml`. Run a focused benchmark with:
 
-The passport benchmarks will error if you do not provide a valid (USA only, currently) passport dump.
+```bash
+cargo bench --bench empty_show -- "Empty show: verifying linkage" --sample-size 10 --warm-up-time 1 --measurement-time 1 --noplot
+```
+
+Run the full suite with `cargo bench`. It includes many proof-generation benchmarks and can take a long time, including when listing or filtering the combined `bench` target. Criterion writes results to `target/criterion/`, and the benchmarks create `proof_sizes.csv`. Passport benchmarks are skipped when `benches/passport/passport_dump.json` is absent.
 
 ### Passport benches
 
-In order to run the benchmarks in `bench/passport`, you need to have a JSON dump of a passport. You can create this from your own US passport by installing the Android app [here](https://github.com/rozbb/passport-reader/) (prebuilt APKs can be found in the root directory). Once you have your passport dump in the clipboard, send it to yourself, put it in a file named `passport_dump.json`, and move it to this repo in `benches/passport/passport_dump.json`.
+In order to run the benchmarks in `benches/passport`, you need to have a JSON dump of a passport. You can create this from your own US passport by installing the Android app [here](https://github.com/rozbb/passport-reader/) (prebuilt APKs can be found in the root directory). Once you have your passport dump in the clipboard, send it to yourself, put it in a file named `passport_dump.json`, and move it to this repo in `benches/passport/passport_dump.json`.
 
 ## License
 
