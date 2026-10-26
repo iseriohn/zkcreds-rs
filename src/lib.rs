@@ -1,4 +1,5 @@
 pub mod attrs;
+pub mod aves_show;
 pub mod birth;
 pub mod com_forest;
 pub mod com_tree;

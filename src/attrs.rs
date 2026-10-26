@@ -98,8 +98,10 @@ where
     }
 }
 
-/// An `Attrs` trait that has something that identifies the user as well as  a random seed we can
-/// use for rate limiting
+/// An `Attrs` trait that has something that identifies the user as well as a random seed we can
+/// use for rate limiting. Implementations must include the seed in `Attrs::to_bytes`, so the
+/// issued attribute commitment binds it. Otherwise a holder could choose a fresh seed for each
+/// show and evade one-time or rate limits.
 pub trait AccountableAttrs<ConstraintF, AC>: Attrs<ConstraintF, AC>
 where
     ConstraintF: PrimeField,

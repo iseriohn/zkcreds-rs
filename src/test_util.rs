@@ -165,7 +165,10 @@ impl NameAndBirthYear {
 impl Attrs<Fr, TestComSchemePedersen> for NameAndBirthYear {
     /// Serializes the attrs into bytes
     fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = self.first_name.to_vec();
+        // The accountable seed must be committed with the other credential attributes.
+        let mut buf = Vec::new();
+        self.seed.serialize(&mut buf).unwrap();
+        buf.extend_from_slice(&self.first_name);
         self.birth_year.serialize(&mut buf).unwrap();
         buf
     }
@@ -182,7 +185,9 @@ impl Attrs<Fr, TestComSchemePedersen> for NameAndBirthYear {
 impl Attrs<Fr, Bls12PoseidonCommitter> for NameAndBirthYear {
     /// Serializes the attrs into bytes
     fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = self.first_name.to_vec();
+        let mut buf = Vec::new();
+        self.seed.serialize(&mut buf).unwrap();
+        buf.extend_from_slice(&self.first_name);
         self.birth_year.serialize(&mut buf).unwrap();
         buf
     }
@@ -211,7 +216,12 @@ impl AccountableAttrs<Fr, TestComSchemePedersen> for NameAndBirthYear {
 
 impl ToBytesGadget<Fr> for NameAndBirthYearVar {
     fn to_bytes(&self) -> Result<Vec<UInt8<Fr>>, SynthesisError> {
-        Ok([self.first_name.to_bytes()?, self.birth_year.to_bytes()?].concat())
+        Ok([
+            self.seed.to_bytes()?,
+            self.first_name.to_bytes()?,
+            self.birth_year.to_bytes()?,
+        ]
+        .concat())
     }
 }
 

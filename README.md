@@ -45,6 +45,33 @@ cargo bench --bench empty_show -- "Empty show: verifying linkage" --sample-size 
 
 Run the full suite with `cargo bench`. It includes many proof-generation benchmarks and can take a long time, including when listing or filtering the combined `bench` target. Criterion writes results to `target/criterion/`, and the benchmarks create `proof_sizes.csv`. Passport benchmarks are skipped when `benches/passport/passport_dump.json` is absent.
 
+## AVES one-time presentations
+
+`src/aves_show.rs` adds an `AvesShowChecker` predicate for credentials that implement
+`AccountableAttrs` with a field-element seed. **The seed must be included in the attributes
+committed at issuance.** The checker proves a per-poll token and a response tag derived from
+that committed seed. It works with the existing tree/forest membership and linkage proof APIs;
+the predicate proof alone does not establish that a credential was issued.
+
+For multi-choice COUNT, use `AvesPayload::Choice(choice)`. For SUM, AVG, or RANK, use
+`AvesPayload::ValueCommitment(bytes)`, where `bytes` is the canonical 32-byte serialization
+of the exact Ristretto commitment in the AVES entry. The value and commitment opening remain
+private. Both payload kinds use the same predicate proving key. The poll ID, payload kind,
+payload, token, and tag are public inputs, so the verifier must construct its checker from
+the poll and the AVES entry being checked, rather than accept a prover-supplied checker.
+
+After verifying the linked zkcreds proof and the AVES index proof, the AVES verifier must:
+
+1. Compare `presentation.entry_id()` with the sampled entry ID.
+2. Compare the numeric choice, or the value commitment bytes, with the sampled entry.
+3. Reject a token already accepted for that poll, using an atomic check-and-insert if shows
+   can arrive concurrently.
+
+This gives one accepted response **per issued credential per poll**. Issuer policy must prevent
+one person from obtaining multiple eligible credentials if the application needs one response
+per person. The AVES range/order/aggregation proofs remain responsible for validity of the
+private value; the credential circuit authenticates the submitted commitment bytes.
+
 ### Passport benches
 
 In order to run the benchmarks in `benches/passport`, you need to have a JSON dump of a passport. You can create this from your own US passport by installing the Android app [here](https://github.com/rozbb/passport-reader/) (prebuilt APKs can be found in the root directory). Once you have your passport dump in the clipboard, send it to yourself, put it in a file named `passport_dump.json`, and move it to this repo in `benches/passport/passport_dump.json`.
