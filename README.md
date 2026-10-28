@@ -53,24 +53,34 @@ committed at issuance.** The checker proves a per-poll token and a response tag 
 that committed seed. It works with the existing tree/forest membership and linkage proof APIs;
 the predicate proof alone does not establish that a credential was issued.
 
-For multi-choice COUNT, use `AvesPayload::Choice(choice)`. For SUM, AVG, or RANK, use
-`AvesPayload::ValueCommitment(bytes)`, where `bytes` is the canonical 32-byte serialization
-of the exact Ristretto commitment in the AVES entry. The value and commitment opening remain
-private. Both payload kinds use the same predicate proving key. The poll ID, payload kind,
-payload, token, and tag are public inputs, so the verifier must construct its checker from
-the poll and the AVES entry being checked, rather than accept a prover-supplied checker.
+The circuit accepts the 32-byte canonical compressed Ristretto encoding of an AVES Pedersen
+commitment as `payload_commitment`. It represents the bytes as two 128-bit public field inputs,
+so no information is lost by reducing a 256-bit encoding modulo the proof field. The tag binds
+both halves to the credential seed and poll ID in one Poseidon call:
+`H(poll_id, seed, low_half, high_half)`. The verifier must compare these exact bytes with the
+commitment in the sampled entry rather than trust a prover-supplied commitment.
+The commitment opening is not checked by this credential predicate. The same predicate proving
+key works for every commitment.
+AVES COUNT entries that currently expose a plain choice need a matching Pedersen commitment
+in the sampled entry before they can use this predicate.
 
 After verifying the linked zkcreds proof and the AVES index proof, the AVES verifier must:
 
 1. Compare `presentation.entry_id()` with the sampled entry ID.
-2. Compare the numeric choice, or the value commitment bytes, with the sampled entry.
+2. Compare `payload_commitment` with the serialized commitment in the sampled entry.
 3. Reject a token already accepted for that poll, using an atomic check-and-insert if shows
    can arrive concurrently.
 
 This gives one accepted response **per issued credential per poll**. Issuer policy must prevent
 one person from obtaining multiple eligible credentials if the application needs one response
 per person. The AVES range/order/aggregation proofs remain responsible for validity of the
-private value; the credential circuit authenticates the submitted commitment bytes.
+private value; the credential circuit authenticates the submitted commitment bytes. If a
+value and opening are revealed, AVES can verify them by recomputing the Pedersen commitment.
+
+The AVES authenticity proof benchmarks are maintained by the Rating repository under
+`rating/aves/benches/`. When this fork is checked out at `rating/zkcreds-rs`, see
+[the benchmark documentation](../aves/benches/README.md) for commands and measurement
+boundaries. This crate keeps its original library microbenchmarks.
 
 ### Passport benches
 
